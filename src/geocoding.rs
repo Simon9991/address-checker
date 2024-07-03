@@ -1,22 +1,25 @@
 use google_maps::prelude::*;
-use google_maps::{geocoding::Geocoding, ClientSettings};
 use std::env;
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
 }
 
-impl MyGeocoding {
-    pub fn new() -> Result<Self, Erra> {
-        let google_api_key = env::var("GOOGLE_MAPS_API_KEY");
+#[derive(Error, Debug)]
+pub enum GeocodingError {
+    #[error("Environment variable error: {0}")]
+    EnvVarError(#[from] std::env::VarError),
 
-        match env::var("GOOGLE_MAPS_API_KEY") {
-            Ok(api_key) => {
-                let map_client = GoogleMapsClient::new(api_key);
-                return Ok(MyGeocoding { map_client });
-            }
-            Err(err) => return Err(err.to_string()),
-        }
+    #[error("Google Maps API error: {0}")]
+    GoogleMapsError(#[from] google_maps::GoogleMapsError),
+}
+
+impl MyGeocoding {
+    pub fn new() -> Result<Self, GeocodingError> {
+        let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
+        let map_client = GoogleMapsClient::try_new(api_key)?;
+        Ok(MyGeocoding { map_client })
     }
 }
