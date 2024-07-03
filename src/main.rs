@@ -1,7 +1,7 @@
 use std::{env, error::Error};
 
 use address::Addresses;
-use geocoding::{GeocodingError, MyGeocoding};
+use geocoding::MyGeocoding;
 
 mod address;
 mod geocoding;
@@ -19,6 +19,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
     old_addresses.display();
+
+    if !old_addresses.addresses.is_empty() {
+        geocoding.get_address_from_google(
+            old_addresses
+                .addresses
+                .clone()
+                .first()
+                .expect("There should be at least 1 address")
+                .clone(),
+        )
+    }
 
     Ok(())
 }

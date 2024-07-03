@@ -1,6 +1,6 @@
 use csv::ReaderBuilder;
 use serde::Deserialize;
-use std::{error::Error, f64, fmt, fs::File, io::BufReader, path::Path, str::FromStr};
+use std::{error::Error, f64, fmt, fs::File, io::BufReader, path::Path};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize)]
 pub struct Address {
@@ -16,7 +16,7 @@ pub struct Address {
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub struct Addresses {
-    addresses: Vec<Address>,
+    pub addresses: Vec<Address>,
 }
 
 impl Addresses {
