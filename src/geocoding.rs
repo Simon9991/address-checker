@@ -2,6 +2,8 @@ use google_maps::prelude::*;
 use std::env;
 use thiserror::Error;
 
+use crate::address::Address;
+
 #[derive(Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
@@ -21,5 +23,10 @@ impl MyGeocoding {
         let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
         let map_client = GoogleMapsClient::try_new(api_key)?;
         Ok(MyGeocoding { map_client })
+    }
+
+    pub fn get_address_from_google(&self, address_obj: Address) {
+        self.map_client
+            .text_search("123 Main street".to_string(), 50000);
     }
 }
