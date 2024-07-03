@@ -15,23 +15,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    let geocoding = MyGeocoding::new()?;
+    let geocoding = MyGeocoding::new().expect("given API key should be valid");
 
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
     old_addresses.display();
-    Ok(())
 
-    // match MyGeocoding::new() {
-    //     Ok(geocoding) => {
-    //         // Use the geocoding instance
-    //     }
-    //     Err(e) => match e {
-    //         GeocodingError::EnvVarError(env_err) => {
-    //             return Err("Environment variable error".into());
-    //         }
-    //         GeocodingError::GoogleMapsError(maps_err) => {
-    //             return Err("Google Maps API error".into());
-    //         }
-    //     },
-    // }
+    Ok(())
 }
