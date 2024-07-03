@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    let geocoding = MyGeocoding::new().expect("given API key should be valid");
+    let geocoding = MyGeocoding::new().expect("API key should be an env variable");
 
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
     old_addresses.display();
