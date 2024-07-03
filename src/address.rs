@@ -1,6 +1,6 @@
 use csv::ReaderBuilder;
 use serde::Deserialize;
-use std::{error::Error, f64, fmt, fs::File, io::BufReader, path::Path};
+use std::{error::Error, f64, fmt, fs::File, io::BufReader, path::Path, str::FromStr};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize)]
 pub struct Address {
@@ -82,6 +82,18 @@ impl Addresses {
         for (index, address) in self.addresses.iter().enumerate() {
             println!("Address {}: {}", index + 1, address);
         }
+    }
+}
+
+impl Address {
+    pub fn obj_to_string(&self) -> String {
+        let str = self.address.clone()
+            + ", "
+            + self.city.clone().as_str()
+            + ", "
+            + self.zip.clone().as_str();
+
+        str
     }
 }
 

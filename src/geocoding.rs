@@ -22,11 +22,16 @@ impl MyGeocoding {
     pub fn new() -> Result<Self, GeocodingError> {
         let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
         let map_client = GoogleMapsClient::try_new(api_key)?;
+
         Ok(MyGeocoding { map_client })
     }
 
     pub fn get_address_from_google(&self, address_obj: Address) {
+        let radius: u32 = 5000;
+
+        /// TODO: await here
         self.map_client
-            .text_search("123 Main street".to_string(), 50000);
+            .text_search(address_obj.obj_to_string(), radius)
+            .execute();
     }
 }
