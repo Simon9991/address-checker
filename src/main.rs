@@ -3,6 +3,7 @@ use std::env;
 use address::Addresses;
 
 mod address;
+mod geocoding;
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
