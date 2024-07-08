@@ -86,6 +86,7 @@ impl Addresses {
 }
 
 impl Address {
+    /// This function is not complete yet, probably missing more details
     pub fn obj_to_string(&self) -> String {
         let str = self.address.clone()
             + ", "

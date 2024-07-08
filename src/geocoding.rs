@@ -50,7 +50,10 @@ impl MyGeocoding {
     /// _Not implemented yet_
     /// Returns the **non parsed** found address as a string and the lat and lng
     pub async fn get_address_from_google(&self, address_obj: Address) {
-        let radius: u32 = 5000; // not sure how to use radius
+        let radius: u32 = 50000; // not sure how to use radius
+        let address_to_search = address_obj.obj_to_string();
+
+        println!("{}", address_to_search);
 
         // TODO: await here
         let search_result = self
