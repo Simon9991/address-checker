@@ -5,8 +5,16 @@ use thiserror::Error;
 use crate::address::Address;
 
 #[derive(Debug)]
+pub struct AddressResult {
+    search_result: String,
+    lat: u32,
+    lng: u32,
+}
+
+#[derive(Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
+    address_results: Vec<AddressResult>,
 }
 
 #[derive(Error, Debug)]
@@ -27,7 +35,12 @@ impl MyGeocoding {
         let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
         let map_client = GoogleMapsClient::try_new(api_key)?;
 
-        Ok(MyGeocoding { map_client })
+        let address_results = vec![];
+
+        Ok(MyGeocoding {
+            map_client,
+            address_results,
+        })
     }
 
     /// Searches for the passed `address_obj` argument.
@@ -37,7 +50,7 @@ impl MyGeocoding {
     /// _Not implemented yet_
     /// Returns the **non parsed** found address as a string and the lat and lng
     pub async fn get_address_from_google(&self, address_obj: Address) {
-        let radius: u32 = 5000;
+        let radius: u32 = 5000; // not sure how to use radius
 
         // TODO: await here
         let search_result = self
@@ -47,5 +60,13 @@ impl MyGeocoding {
             .await;
 
         println!("{:#?}", search_result);
+
+        // TODO: add to the `address_results` array
+    }
+}
+
+impl AddressResult {
+    pub fn parse_to_address_obj(&self) {
+        todo!()
     }
 }
