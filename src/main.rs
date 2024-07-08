@@ -26,6 +26,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //     geocoding.get_address_from_google(addr.clone());
     // }
 
+    // For now, checking only one address for testing purposes and not flood with API calls
+    // TODO: remove the following once the program is finished (also maybe test with a bigger
+    // sample)
     if !old_addresses.addresses.is_empty() {
         geocoding
             .get_address_from_google(
