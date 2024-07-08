@@ -20,6 +20,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
     old_addresses.display();
 
+    // TODO: This is for later once one call is working
+    // for addr in &old_addresses.addresses {
+    //     geocoding.get_address_from_google(addr.clone());
+    // }
+
     if !old_addresses.addresses.is_empty() {
         geocoding.get_address_from_google(
             old_addresses
@@ -28,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .first()
                 .expect("There should be at least 1 address")
                 .clone(),
-        )
+        );
     }
 
     Ok(())

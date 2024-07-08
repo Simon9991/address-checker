@@ -26,12 +26,13 @@ impl MyGeocoding {
         Ok(MyGeocoding { map_client })
     }
 
-    pub fn get_address_from_google(&self, address_obj: Address) {
+    pub async fn get_address_from_google(&self, address_obj: Address) {
         let radius: u32 = 5000;
 
-        /// TODO: await here
+        // TODO: await here
         self.map_client
             .text_search(address_obj.obj_to_string(), radius)
-            .execute();
+            .execute()
+            .await;
     }
 }
