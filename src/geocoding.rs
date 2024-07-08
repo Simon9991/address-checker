@@ -6,9 +6,15 @@ use crate::address::Address;
 
 #[derive(Debug)]
 pub struct AddressResult {
-    search_result: String,
-    lat: u32,
-    lng: u32,
+    street_number: String,
+    route: String,
+    locality: String,
+    administrative_area_level2: String,
+    administrative_area_level1: String,
+    country: String,
+    postal_code: String,
+    lat: google_maps::prelude::Decimal,
+    lng: google_maps::prelude::Decimal,
 }
 
 #[derive(Debug)]
@@ -46,11 +52,11 @@ impl MyGeocoding {
     /// Searches for the passed `address_obj` argument.
     /// ## Arguments
     /// `address_obj` --> an `Address` object containing the needed information
-    /// ## Returning
-    /// _Not implemented yet_
-    /// Returns the **non parsed** found address as a string and the lat and lng
-    pub async fn get_address_from_google(&self, address_obj: Address) {
-        let address_to_search = address_obj.obj_to_string();
+    pub async fn get_address_from_google(
+        &mut self,
+        address_obj: Address,
+    ) -> Result<(), GeocodingError> {
+        let address_to_search = address_obj.get_address_with_site_name();
 
         println!("{}", address_to_search);
 
@@ -60,11 +66,55 @@ impl MyGeocoding {
             .with_region(Region::France)
             .with_address(address_to_search)
             .execute()
-            .await;
+            .await?;
 
         println!("{:#?}", search_result);
 
-        // TODO: add to the `address_results` array
+        if let Some(result) = search_result.results.first() {
+            let address_results = self.parse_geocoding_result(result);
+            self.address_results.push(address_results);
+        }
+
+        Ok(())
+    }
+
+    fn parse_geocoding_result(&self, result: &Geocoding) -> AddressResult {
+        let mut street_number = String::new();
+        let mut route = String::new();
+        let mut locality = String::new();
+        let mut administrative_area_level2 = String::new();
+        let mut administrative_area_level1 = String::new();
+        let mut country = String::new();
+        let mut postal_code = String::new();
+
+        for component in &result.address_components {
+            match component.types.first() {
+                Some(PlaceType::StreetNumber) => street_number = component.long_name.clone(),
+                Some(PlaceType::Route) => route = component.long_name.clone(),
+                Some(PlaceType::Locality) => locality = component.long_name.clone(),
+                Some(PlaceType::AdministrativeAreaLevel1) => {
+                    administrative_area_level1 = component.long_name.clone()
+                }
+                Some(PlaceType::AdministrativeAreaLevel2) => {
+                    administrative_area_level2 = component.long_name.clone()
+                }
+                Some(PlaceType::Country) => country = component.long_name.clone(),
+                Some(PlaceType::PostalCode) => postal_code = component.long_name.clone(),
+                _ => {}
+            }
+        }
+
+        AddressResult {
+            street_number,
+            route,
+            locality,
+            administrative_area_level2,
+            administrative_area_level1,
+            country,
+            postal_code,
+            lat: result.geometry.location.lat,
+            lng: result.geometry.location.lng,
+        }
     }
 }
 

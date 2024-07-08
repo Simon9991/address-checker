@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
-    let geocoding = MyGeocoding::new().expect("API key should be an env variable");
+    let mut geocoding = MyGeocoding::new().expect("API key should be an env variable");
 
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
     old_addresses.display();
@@ -30,7 +30,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // TODO: remove the following once the program is finished (also maybe test with a bigger
     // sample)
     if !old_addresses.addresses.is_empty() {
-        geocoding
+        // let _ to remove warning about using Result
+        let _ = geocoding
             .get_address_from_google(
                 old_addresses
                     .addresses

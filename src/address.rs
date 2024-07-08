@@ -96,6 +96,18 @@ impl Address {
 
         str
     }
+
+    pub fn get_address_with_site_name(&self) -> String {
+        let str = self.name.clone()
+            + ", "
+            + self.address.clone().as_str()
+            + ", "
+            + self.city.clone().as_str()
+            + ", "
+            + self.zip.clone().as_str();
+
+        str
+    }
 }
 
 impl fmt::Display for Address {
