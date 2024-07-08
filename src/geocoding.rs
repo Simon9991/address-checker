@@ -30,9 +30,12 @@ impl MyGeocoding {
         let radius: u32 = 5000;
 
         // TODO: await here
-        self.map_client
+        let search_result = self
+            .map_client
             .text_search(address_obj.obj_to_string(), radius)
             .execute()
             .await;
+
+        println!("{:#?}", search_result);
     }
 }
