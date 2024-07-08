@@ -6,7 +6,8 @@ use geocoding::MyGeocoding;
 mod address;
 mod geocoding;
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() != 2 {
@@ -26,14 +27,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     // }
 
     if !old_addresses.addresses.is_empty() {
-        geocoding.get_address_from_google(
-            old_addresses
-                .addresses
-                .clone()
-                .first()
-                .expect("There should be at least 1 address")
-                .clone(),
-        );
+        geocoding
+            .get_address_from_google(
+                old_addresses
+                    .addresses
+                    .clone()
+                    .first()
+                    .expect("There should be at least 1 address")
+                    .clone(),
+            )
+            .await;
     }
 
     Ok(())
