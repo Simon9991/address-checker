@@ -72,7 +72,7 @@ impl MyGeocoding {
 
         println!("Maps API found: {:#?}", search_result);
 
-        let parsed_address = self.parse_geocoding_result(
+        let parsed_address = AddressResult::parse_geocoding_result(
             search_result
                 .results
                 .first()
@@ -82,8 +82,10 @@ impl MyGeocoding {
 
         Ok(())
     }
+}
 
-    fn parse_geocoding_result(&self, result: &Geocoding) -> AddressResult {
+impl AddressResult {
+    pub fn parse_geocoding_result(result: &Geocoding) -> AddressResult {
         // struct parts bc crate author committed a crime (vec as enum)
         let mut street_number = None;
         let mut route = None;
@@ -129,11 +131,5 @@ impl MyGeocoding {
             lat: result.geometry.location.lat,
             lng: result.geometry.location.lng,
         }
-    }
-}
-
-impl AddressResult {
-    pub fn parse_to_address_obj(&self) {
-        todo!()
     }
 }
