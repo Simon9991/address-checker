@@ -54,7 +54,12 @@ impl Addresses {
         Ok(Addresses { addresses })
     }
 
-    pub fn generate_diff_csv(&self) -> Result<(), Box<dyn Error>> {
+    pub fn to_csv(&self, original_file_name: &String) -> Result<(), Box<dyn Error>> {
+        // 1. Checking if the the directory `./results/` exist, if not creates it
+        // 1.5 Get the original_file_name and append `_gmaps_version.csv` to it
+        // 2. Create a `csv::Writer::from_path` with the `./results/` + `new_file_name`
+        // 3. Write the headers (can probably be skipped thanks to `serde` and `Record` type)
+        // 4. Looping through the `self.addresses` vector and write with the csv writer
         todo!()
     }
 
