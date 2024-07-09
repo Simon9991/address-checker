@@ -21,3 +21,5 @@ Cargo.lock
 # Others
 addresses/
 .env
+results/
+*.csv
