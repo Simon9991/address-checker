@@ -109,34 +109,31 @@ impl Address {
         let mut administrative_area_level1 = None;
         let mut country = None;
         let mut postal_code = None;
-        let mut full_address = None;
 
-        // TODO: fill the full address with `street_number` + `route`
-
-        // parse the result into the struct
-
-        let long_names = result
-            .address_components
-            .iter()
-            .map(|component| component.long_name.clone());
-
-        for (c, name) in result
-            .address_components
-            .iter()
-            .flat_map(|component| component.types.clone())
-            .zip(long_names)
-        {
-            match c {
-                PlaceType::StreetNumber => street_number = Some(name),
-                PlaceType::Route => route = Some(name),
-                PlaceType::Locality => locality = Some(name),
-                PlaceType::AdministrativeAreaLevel1 => administrative_area_level1 = Some(name),
-                PlaceType::AdministrativeAreaLevel2 => administrative_area_level2 = Some(name),
-                PlaceType::Country => country = Some(name),
-                PlaceType::PostalCode => postal_code = Some(name),
-                _ => {}
+        for component in &result.address_components {
+            for type_ in &component.types {
+                match type_ {
+                    PlaceType::StreetNumber => street_number = Some(component.long_name.clone()),
+                    PlaceType::Route => route = Some(component.long_name.clone()),
+                    PlaceType::Locality => locality = Some(component.long_name.clone()),
+                    PlaceType::AdministrativeAreaLevel1 => {
+                        administrative_area_level1 = Some(component.long_name.clone())
+                    }
+                    PlaceType::AdministrativeAreaLevel2 => {
+                        administrative_area_level2 = Some(component.long_name.clone())
+                    }
+                    PlaceType::Country => country = Some(component.long_name.clone()),
+                    PlaceType::PostalCode => postal_code = Some(component.long_name.clone()),
+                    _ => {}
+                }
             }
         }
+
+        let full_address = match (street_number.as_ref(), route.as_ref()) {
+            (Some(num), Some(street)) => Some(format!("{} {}", num, street)),
+            (None, Some(street)) => Some(street.clone()),
+            _ => None,
+        };
 
         Address {
             name: site_name,

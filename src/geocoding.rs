@@ -66,6 +66,7 @@ impl MyGeocoding {
                 .expect("should get at least one result from API"),
             address_obj.get_site_name(),
         );
+        dbg!(&parsed_address);
         self.address_results.push(parsed_address);
 
         Ok(())
