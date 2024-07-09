@@ -1,17 +1,17 @@
 use csv::ReaderBuilder;
 use serde::Deserialize;
-use std::{error::Error, f64, fmt, fs::File, io::BufReader, path::Path};
+use std::{error::Error, fs::File, io::BufReader, path::Path};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize)]
 pub struct Address {
-    name: String,
-    address: String,
-    city: String,
-    zip: String,
-    administrative_area_level1: String,
-    administrative_area_level2: String,
-    lat: f64,
-    lng: f64,
+    name: Option<String>,
+    address: Option<String>,
+    city: Option<String>,
+    zip: Option<String>,
+    administrative_area_level1: Option<String>,
+    administrative_area_level2: Option<String>,
+    lat: Option<google_maps::prelude::Decimal>,
+    lng: Option<google_maps::prelude::Decimal>,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
@@ -37,92 +37,45 @@ impl Addresses {
         Ok(Addresses { addresses })
     }
 
-    pub fn generate_diff_csv(
-        &self,
-        differences: &[(Address, Address)],
-        output_path: &str,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut wtr = csv::Writer::from_path(output_path)?;
-
-        wtr.write_record([
-            "name",
-            "old_address",
-            "old_city",
-            "old_zip",
-            "old_lat",
-            "old_lng",
-            "new_address",
-            "new_city",
-            "new_zip",
-            "new_lat",
-            "new_lng",
-        ])?;
-
-        for (old, new) in differences {
-            wtr.write_record([
-                &old.name,
-                &old.address,
-                &old.city,
-                &old.zip,
-                &old.lat.to_string(),
-                &old.lng.to_string(),
-                &new.address,
-                &new.city,
-                &new.zip,
-                &new.lat.to_string(),
-                &new.lng.to_string(),
-            ])?;
-        }
-
-        wtr.flush()?;
-        Ok(())
+    pub fn generate_diff_csv(&self) -> Result<(), Box<dyn Error>> {
+        todo!()
     }
 
     pub fn display(&self) {
         for (index, address) in self.addresses.iter().enumerate() {
-            println!("Address {}: {}", index + 1, address);
+            println!(
+                "Address {}: {}",
+                index + 1,
+                address
+                    .get_formatted_address()
+                    .expect("original file address should be correct")
+            );
         }
     }
 }
 
 impl Address {
-    /// This function is not complete yet, probably missing more details
-    pub fn obj_to_string(&self) -> String {
-        let str = self.address.clone()
-            + ", "
-            + self.city.clone().as_str()
-            + ", "
-            + self.zip.clone().as_str();
-
-        str
+    pub fn get_formatted_address(&self) -> Option<String> {
+        Some(format!(
+            "{}, {}, {}, {}, {}, {}, {}, {}",
+            self.name.clone()?,
+            self.address.clone()?,
+            self.city.clone()?,
+            self.zip.clone()?,
+            self.administrative_area_level1.clone()?,
+            self.administrative_area_level2.clone()?,
+            self.lat.clone()?.to_string(),
+            self.lng.clone()?.to_string(),
+        ))
     }
 
-    pub fn get_address_with_site_name(&self) -> String {
-        let str = self.name.clone()
-            + ", "
-            + self.address.clone().as_str()
-            + ", "
-            + self.city.clone().as_str()
-            + ", "
-            + self.zip.clone().as_str();
-
-        str
-    }
-}
-
-impl fmt::Display for Address {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Site: {}, Street: {}, City: {}, ZIP: {}, Area 1: {}, Area 2: {}, Lat: {}, Lng: {}",
-            self.name,
-            self.address,
-            self.city,
-            self.zip,
-            self.administrative_area_level1,
-            self.administrative_area_level2,
-            self.lat,
-            self.lng
-        )
+    pub fn get_address_with_site_name(&self) -> Option<String> {
+        Some(format!(
+            "{}, {}, {}, {}",
+            self.name.clone()?,
+            self.address.clone()?,
+            self.city.clone()?,
+            self.zip.clone()?
+        ))
     }
 }

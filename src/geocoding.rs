@@ -6,13 +6,13 @@ use crate::address::Address;
 
 #[derive(Debug)]
 pub struct AddressResult {
-    street_number: String,
-    route: String,
-    locality: String,
-    administrative_area_level2: String,
-    administrative_area_level1: String,
-    country: String,
-    postal_code: String,
+    street_number: Option<String>,
+    route: Option<String>,
+    locality: Option<String>,
+    administrative_area_level2: Option<String>,
+    administrative_area_level1: Option<String>,
+    country: Option<String>,
+    postal_code: Option<String>,
     lat: google_maps::prelude::Decimal,
     lng: google_maps::prelude::Decimal,
 }
@@ -56,9 +56,11 @@ impl MyGeocoding {
         &mut self,
         address_obj: Address,
     ) -> Result<(), GeocodingError> {
-        let address_to_search = address_obj.get_address_with_site_name();
+        let address_to_search = address_obj
+            .get_address_with_site_name()
+            .expect("address should be found");
 
-        println!("{}", address_to_search);
+        dbg!(address_to_search.clone());
 
         let search_result = self
             .map_client
@@ -68,38 +70,50 @@ impl MyGeocoding {
             .execute()
             .await?;
 
-        println!("{:#?}", search_result);
+        println!("Maps API found: {:#?}", search_result);
 
-        if let Some(result) = search_result.results.first() {
-            let address_results = self.parse_geocoding_result(result);
-            self.address_results.push(address_results);
-        }
+        let parsed_address = self.parse_geocoding_result(
+            search_result
+                .results
+                .first()
+                .expect("should get at least one result from API"),
+        );
+        self.address_results.push(parsed_address);
 
         Ok(())
     }
 
     fn parse_geocoding_result(&self, result: &Geocoding) -> AddressResult {
-        let mut street_number = String::new();
-        let mut route = String::new();
-        let mut locality = String::new();
-        let mut administrative_area_level2 = String::new();
-        let mut administrative_area_level1 = String::new();
-        let mut country = String::new();
-        let mut postal_code = String::new();
+        // struct parts bc crate author committed a crime (vec as enum)
+        let mut street_number = None;
+        let mut route = None;
+        let mut locality = None;
+        let mut administrative_area_level2 = None;
+        let mut administrative_area_level1 = None;
+        let mut country = None;
+        let mut postal_code = None;
 
-        for component in &result.address_components {
-            match component.types.first() {
-                Some(PlaceType::StreetNumber) => street_number = component.long_name.clone(),
-                Some(PlaceType::Route) => route = component.long_name.clone(),
-                Some(PlaceType::Locality) => locality = component.long_name.clone(),
-                Some(PlaceType::AdministrativeAreaLevel1) => {
-                    administrative_area_level1 = component.long_name.clone()
-                }
-                Some(PlaceType::AdministrativeAreaLevel2) => {
-                    administrative_area_level2 = component.long_name.clone()
-                }
-                Some(PlaceType::Country) => country = component.long_name.clone(),
-                Some(PlaceType::PostalCode) => postal_code = component.long_name.clone(),
+        // parse the result into the struct
+
+        let long_names = result
+            .address_components
+            .iter()
+            .map(|component| component.long_name.clone());
+
+        for (c, name) in result
+            .address_components
+            .iter()
+            .flat_map(|component| component.types.clone())
+            .zip(long_names)
+        {
+            match c {
+                PlaceType::StreetNumber => street_number = Some(name),
+                PlaceType::Route => route = Some(name),
+                PlaceType::Locality => locality = Some(name),
+                PlaceType::AdministrativeAreaLevel1 => administrative_area_level1 = Some(name),
+                PlaceType::AdministrativeAreaLevel2 => administrative_area_level2 = Some(name),
+                PlaceType::Country => country = Some(name),
+                PlaceType::PostalCode => postal_code = Some(name),
                 _ => {}
             }
         }
