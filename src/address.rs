@@ -75,12 +75,12 @@ impl Address {
     pub fn get_formatted_address(&self) -> Option<String> {
         Some(format!(
             "{}, {}, {}, {}, {}, {}, {}, {}",
-            self.name.clone()?,
-            self.full_address.clone()?,
-            self.locality.clone()?,
-            self.postal_code.clone()?,
-            self.administrative_area_level1.clone()?,
-            self.administrative_area_level2.clone()?,
+            self.name.as_ref()?,
+            self.full_address.as_ref()?,
+            self.locality.as_ref()?,
+            self.postal_code.as_ref()?,
+            self.administrative_area_level1.as_ref()?,
+            self.administrative_area_level2.as_ref()?,
             self.lat,
             self.lng,
         ))
@@ -89,10 +89,10 @@ impl Address {
     pub fn get_address_with_site_name(&self) -> Option<String> {
         Some(format!(
             "{}, {}, {}, {}",
-            self.name.clone()?,
-            self.full_address.clone()?,
-            self.locality.clone()?,
-            self.postal_code.clone()?
+            self.name.as_ref()?,
+            self.full_address.as_ref()?,
+            self.locality.as_ref()?,
+            self.postal_code.as_ref()?
         ))
     }
 

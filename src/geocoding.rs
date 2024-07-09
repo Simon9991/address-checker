@@ -41,13 +41,13 @@ impl MyGeocoding {
     /// `address_obj` --> an `Address` object containing the needed information
     pub async fn get_address_from_google(
         &mut self,
-        address_obj: Address,
+        address_obj: &Address,
     ) -> Result<(), GeocodingError> {
         let address_to_search = address_obj
             .get_address_with_site_name()
             .expect("address should be found");
 
-        dbg!(address_to_search.clone());
+        dbg!(&address_to_search);
 
         let search_result = self
             .map_client
