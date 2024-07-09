@@ -64,8 +64,8 @@ impl Address {
             self.zip.clone()?,
             self.administrative_area_level1.clone()?,
             self.administrative_area_level2.clone()?,
-            self.lat.clone()?.to_string(),
-            self.lng.clone()?.to_string(),
+            self.lat?,
+            self.lng?,
         ))
     }
 
