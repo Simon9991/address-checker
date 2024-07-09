@@ -1,7 +1,12 @@
 use csv::ReaderBuilder;
 use google_maps::{geocoding::Geocoding, PlaceType};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs::File, io::BufReader, path::Path};
+use std::{
+    error::Error,
+    fs::{self, File},
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
@@ -54,13 +59,49 @@ impl Addresses {
         Ok(Addresses { addresses })
     }
 
-    pub fn to_csv(&self, original_file_name: &String) -> Result<(), Box<dyn Error>> {
+    pub fn addresses_to_csv(
+        adresses: Vec<Address>,
+        original_file_path: &PathBuf,
+    ) -> Result<(), Box<dyn Error>> {
         // 1. Checking if the the directory `./results/` exist, if not creates it
         // 1.5 Get the original_file_name and append `_gmaps_version.csv` to it
         // 2. Create a `csv::Writer::from_path` with the `./results/` + `new_file_name`
         // 3. Write the headers (can probably be skipped thanks to `serde` and `Record` type)
         // 4. Looping through the `self.addresses` vector and write with the csv writer
-        todo!()
+
+        // 1.
+        fs::create_dir_all("./results")?;
+        // Note: I should maybe stop to use `.expect()` everywhere but...
+        let new_file_path = format!(
+            "./results/{}_gmaps_version.csv",
+            original_file_path
+                .file_stem()
+                .expect("original file name should be valid")
+                .to_str()
+                .expect("str conversion from PathBuf should work")
+        );
+
+        // 2.
+        let mut writer = csv::Writer::from_path(new_file_path)?;
+
+        // 4. (and 3.?)
+        for addr in adresses.iter() {
+            writer.write_record([
+                addr.name.as_deref().unwrap_or(""),
+                addr.full_address.as_deref().unwrap_or(""),
+                addr.locality.as_deref().unwrap_or(""),
+                addr.administrative_area_level1.as_deref().unwrap_or(""),
+                addr.administrative_area_level2.as_deref().unwrap_or(""),
+                addr.postal_code.as_deref().unwrap_or(""),
+                &addr.lat.to_string(),
+                &addr.lng.to_string(),
+            ])?;
+        }
+
+        // 5. saving the changes to the file
+        writer.flush()?;
+
+        Ok(())
     }
 
     pub fn display(&self) {

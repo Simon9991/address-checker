@@ -1,4 +1,4 @@
-use std::{env, error::Error};
+use std::{env, error::Error, path::PathBuf, str::FromStr};
 
 use address::Addresses;
 use geocoding::MyGeocoding;
@@ -16,8 +16,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         );
     }
 
+    let file_path = PathBuf::from_str(&args[1])?;
+
     let mut geocoding = MyGeocoding::new().expect("API key should be an env variable");
 
+    // TODO: Change to PathBuf instead of String for new
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
 
     // debugging print
@@ -42,6 +45,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             )
             .await;
     }
+
+    Addresses::addresses_to_csv(geocoding.address_results, &file_path)?;
 
     Ok(())
 }

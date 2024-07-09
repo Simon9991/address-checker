@@ -7,7 +7,7 @@ use crate::address::Address;
 #[derive(Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
-    address_results: Vec<Address>,
+    pub address_results: Vec<Address>,
 }
 
 #[derive(Error, Debug)]
