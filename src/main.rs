@@ -19,6 +19,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut geocoding = MyGeocoding::new().expect("API key should be an env variable");
 
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
+
+    // debugging print
     old_addresses.display();
 
     // TODO: This is for later once one call is working
