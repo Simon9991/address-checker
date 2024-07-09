@@ -5,22 +5,9 @@ use thiserror::Error;
 use crate::address::Address;
 
 #[derive(Debug)]
-pub struct AddressResult {
-    street_number: Option<String>,
-    route: Option<String>,
-    locality: Option<String>,
-    administrative_area_level2: Option<String>,
-    administrative_area_level1: Option<String>,
-    country: Option<String>,
-    postal_code: Option<String>,
-    lat: google_maps::prelude::Decimal,
-    lng: google_maps::prelude::Decimal,
-}
-
-#[derive(Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
-    address_results: Vec<AddressResult>,
+    address_results: Vec<Address>,
 }
 
 #[derive(Error, Debug)]
@@ -72,64 +59,15 @@ impl MyGeocoding {
 
         println!("Maps API found: {:#?}", search_result);
 
-        let parsed_address = AddressResult::parse_geocoding_result(
+        let parsed_address = Address::parse_geocoding_result(
             search_result
                 .results
                 .first()
                 .expect("should get at least one result from API"),
+            address_obj.get_site_name(),
         );
         self.address_results.push(parsed_address);
 
         Ok(())
-    }
-}
-
-impl AddressResult {
-    pub fn parse_geocoding_result(result: &Geocoding) -> AddressResult {
-        // struct parts bc crate author committed a crime (vec as enum)
-        let mut street_number = None;
-        let mut route = None;
-        let mut locality = None;
-        let mut administrative_area_level2 = None;
-        let mut administrative_area_level1 = None;
-        let mut country = None;
-        let mut postal_code = None;
-
-        // parse the result into the struct
-
-        let long_names = result
-            .address_components
-            .iter()
-            .map(|component| component.long_name.clone());
-
-        for (c, name) in result
-            .address_components
-            .iter()
-            .flat_map(|component| component.types.clone())
-            .zip(long_names)
-        {
-            match c {
-                PlaceType::StreetNumber => street_number = Some(name),
-                PlaceType::Route => route = Some(name),
-                PlaceType::Locality => locality = Some(name),
-                PlaceType::AdministrativeAreaLevel1 => administrative_area_level1 = Some(name),
-                PlaceType::AdministrativeAreaLevel2 => administrative_area_level2 = Some(name),
-                PlaceType::Country => country = Some(name),
-                PlaceType::PostalCode => postal_code = Some(name),
-                _ => {}
-            }
-        }
-
-        AddressResult {
-            street_number,
-            route,
-            locality,
-            administrative_area_level2,
-            administrative_area_level1,
-            country,
-            postal_code,
-            lat: result.geometry.location.lat,
-            lng: result.geometry.location.lng,
-        }
     }
 }

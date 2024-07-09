@@ -1,4 +1,4 @@
-use std::{env, error::Error};
+use std::{clone, env, error::Error};
 
 use address::Addresses;
 use geocoding::MyGeocoding;
@@ -37,7 +37,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .get_address_from_google(
                 old_addresses
                     .addresses
-                    .clone()
                     .first()
                     .expect("There should be at least 1 address")
                     .clone(),
