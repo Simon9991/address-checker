@@ -23,27 +23,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // TODO: Change to PathBuf instead of String for new
     let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
 
-    // debugging print
-    old_addresses.display();
-
-    // TODO: This is for later once one call is working
-    // for addr in &old_addresses.addresses {
-    //     geocoding.get_address_from_google(addr.clone());
-    // }
-
-    // For now, checking only one address for testing purposes and not flood with API calls
-    // TODO: remove the following once the program is finished (also maybe test with a bigger
-    // sample)
-    if !old_addresses.addresses.is_empty() {
-        // let _ to remove warning about using Result
-        let _ = geocoding
-            .get_address_from_google(
-                old_addresses
-                    .addresses
-                    .first()
-                    .expect("There should be at least 1 address"),
-            )
-            .await;
+    for addr in &old_addresses.addresses {
+        geocoding.get_address_from_google(addr).await?;
     }
 
     Addresses::addresses_to_csv(geocoding.address_results, &file_path)?;
