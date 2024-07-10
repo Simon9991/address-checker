@@ -5,7 +5,7 @@ use std::{
     error::Error,
     fs::{self, File},
     io::BufReader,
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
@@ -21,18 +21,18 @@ pub struct Address {
     #[serde(rename = "zip")]
     postal_code: Option<String>,
 
-    administrative_area_level2: Option<String>,
     administrative_area_level1: Option<String>,
+    administrative_area_level2: Option<String>,
 
     lat: google_maps::prelude::Decimal,
     lng: google_maps::prelude::Decimal,
 
     // Fields for geocoding results
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     street_number: Option<String>,
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     route: Option<String>,
-    #[serde(skip_deserializing)]
+    #[serde(skip_deserializing, skip_serializing)]
     country: Option<String>,
 }
 
@@ -61,15 +61,10 @@ impl Addresses {
 
     pub fn addresses_to_csv(
         adresses: Vec<Address>,
-        original_file_path: &PathBuf,
+        original_file_path: &Path,
     ) -> Result<(), Box<dyn Error>> {
         // 1. Checking if the the directory `./results/` exist, if not creates it
-        // 1.5 Get the original_file_name and append `_gmaps_version.csv` to it
-        // 2. Create a `csv::Writer::from_path` with the `./results/` + `new_file_name`
-        // 3. Write the headers (can probably be skipped thanks to `serde` and `Record` type)
-        // 4. Looping through the `self.addresses` vector and write with the csv writer
-
-        // 1.
+        // 1. Creating the output file path.
         fs::create_dir_all("./results")?;
         // Note: I should maybe stop to use `.expect()` everywhere but...
         let new_file_path = format!(
@@ -81,24 +76,16 @@ impl Addresses {
                 .expect("str conversion from PathBuf should work")
         );
 
-        // 2.
+        // 2. Create a `csv::Writer::from_path` with the `./results/` + `new_file_name`
         let mut writer = csv::Writer::from_path(new_file_path)?;
 
-        // 4. (and 3.?)
+        // 3. Write the headers
+        // 3. Looping through the `self.addresses` vector and write with the csv writer
         for addr in adresses.iter() {
-            writer.write_record([
-                addr.name.as_deref().unwrap_or(""),
-                addr.full_address.as_deref().unwrap_or(""),
-                addr.locality.as_deref().unwrap_or(""),
-                addr.administrative_area_level1.as_deref().unwrap_or(""),
-                addr.administrative_area_level2.as_deref().unwrap_or(""),
-                addr.postal_code.as_deref().unwrap_or(""),
-                &addr.lat.to_string(),
-                &addr.lng.to_string(),
-            ])?;
+            writer.serialize(addr)?;
         }
 
-        // 5. saving the changes to the file
+        // 4. Saving the changes to the file
         writer.flush()?;
 
         Ok(())
