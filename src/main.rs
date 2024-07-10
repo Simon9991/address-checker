@@ -1,33 +1,24 @@
-use std::{env, error::Error, path::PathBuf, str::FromStr};
+use std::error::Error;
 
 use address::Addresses;
+use args::Arguments;
 use geocoding::MyGeocoding;
 
 mod address;
+mod args;
 mod geocoding;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-
-    if args.len() != 2 {
-        return Err(
-            "Error: Must have one argument. Use: `cargo run path/to/file.csv`, `csv` only".into(),
-        );
-    }
-
-    let file_path = PathBuf::from_str(&args[1])?;
-
+    let args = Arguments::new();
     let mut geocoding = MyGeocoding::new().expect("API key should be an env variable");
-
-    // TODO: Change to PathBuf instead of String for new
-    let old_addresses = Addresses::new(&args[1]).map_err(|e| e.to_string())?;
+    let old_addresses = Addresses::new(&args.file_path_buf)?;
 
     for addr in &old_addresses.addresses {
         geocoding.get_address_from_google(addr).await?;
     }
 
-    Addresses::addresses_to_csv(geocoding.address_results, &file_path)?;
+    Addresses::addresses_to_csv(geocoding.address_results, &args.file_path_buf)?;
 
     Ok(())
 }

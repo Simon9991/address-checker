@@ -42,9 +42,8 @@ pub struct Addresses {
 }
 
 impl Addresses {
-    pub fn new(path_to_file: &str) -> Result<Self, Box<dyn Error>> {
-        let path = Path::new(path_to_file);
-        let file = File::open(path)?;
+    pub fn new(path_to_file: &Path) -> Result<Self, Box<dyn Error>> {
+        let file = File::open(path_to_file)?;
         let reader = BufReader::new(file);
 
         let mut csv_reader = ReaderBuilder::new().has_headers(true).from_reader(reader);
