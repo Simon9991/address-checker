@@ -1,4 +1,4 @@
-use std::{error::Error, path::PathBuf, str::FromStr};
+use std::{error::Error, path::PathBuf, str::FromStr, time::Instant};
 
 use address::Addresses;
 use args::Arguments;
@@ -10,6 +10,9 @@ mod geocoding;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    // Timing performance
+    let start = Instant::now();
+
     // CLI Arguments
     let args = Arguments::new();
     let file_path_buf = PathBuf::from_str(args.file_path.as_str())?;
@@ -25,6 +28,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // Serializing back into a `.csv`
     Addresses::addresses_to_csv(geocoding.address_results, &file_path_buf)?;
+
+    let duration = start.elapsed();
+    println!("Time taken: {:?}", duration);
 
     Ok(())
 }
