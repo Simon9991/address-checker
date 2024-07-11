@@ -2,11 +2,11 @@ use csv::ReaderBuilder;
 use google_maps::{geocoding::Geocoding, PlaceType};
 use serde::{Deserialize, Serialize};
 use std::{
-    error::Error,
     fs::{self, File},
     io::BufReader,
     path::Path,
 };
+use thiserror::Error;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
@@ -36,14 +36,45 @@ pub struct Address {
     country: Option<String>,
 }
 
+#[derive(Error, Debug)]
+pub enum AddressError {
+    #[error("I/O error: {0}")]
+    IoError(#[from] std::io::Error),
+
+    #[error("File not found: {0}")]
+    FileNotFound(std::path::PathBuf),
+
+    #[error("CSV error: {0}")]
+    CsvError(#[from] csv::Error),
+
+    #[error("Invalid CSV format")]
+    InvalidCsvFormat,
+
+    #[error("Failed to deserialize address")]
+    DeserializationError,
+
+    #[error("Invalid original file name")]
+    InvalidOriginalFileName,
+
+    #[error("Failed to convert the original file name into a valid string")]
+    FileNameConversionFailed,
+}
+
 #[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct Addresses {
     pub addresses: Vec<Address>,
 }
 
+#[allow(dead_code)]
 impl Addresses {
-    pub fn new(path_to_file: &Path) -> Result<Self, Box<dyn Error>> {
-        let file = File::open(path_to_file)?;
+    pub fn new(path_to_file: &Path) -> Result<Self, AddressError> {
+        let file = File::open(path_to_file).map_err(|e| {
+            if e.kind() == std::io::ErrorKind::NotFound {
+                AddressError::FileNotFound(path_to_file.to_path_buf())
+            } else {
+                AddressError::IoError(e)
+            }
+        })?;
         let reader = BufReader::new(file);
 
         let mut csv_reader = ReaderBuilder::new().has_headers(true).from_reader(reader);
@@ -51,8 +82,12 @@ impl Addresses {
         let mut addresses = vec![];
 
         for result in csv_reader.deserialize() {
-            let address: Address = result?;
+            let address: Address = result.map_err(|_| AddressError::DeserializationError)?;
             addresses.push(address);
+        }
+
+        if addresses.is_empty() {
+            return Err(AddressError::InvalidCsvFormat);
         }
 
         Ok(Addresses { addresses })
@@ -61,18 +96,17 @@ impl Addresses {
     pub fn addresses_to_csv(
         adresses: Vec<Address>,
         original_file_path: &Path,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), AddressError> {
         // 1. Checking if the the directory `./results/` exist, if not creates it
         // 1. Creating the output file path.
         fs::create_dir_all("./results")?;
-        // Note: I should maybe stop to use `.expect()` everywhere but...
         let new_file_path = format!(
             "./results/{}_gmaps_version.csv",
             original_file_path
                 .file_stem()
-                .expect("original file name should be valid")
+                .ok_or(AddressError::InvalidOriginalFileName)?
                 .to_str()
-                .expect("str conversion from PathBuf should work")
+                .ok_or(AddressError::FileNameConversionFailed)?
         );
 
         // 2. Create a `csv::Writer::from_path` with the `./results/` + `new_file_name`
@@ -90,16 +124,18 @@ impl Addresses {
         Ok(())
     }
 
-    pub fn display(&self) {
+    pub fn display(&self) -> Result<(), AddressError> {
         for (index, address) in self.addresses.iter().enumerate() {
             println!(
                 "Address {}: {}",
                 index + 1,
                 address
                     .get_formatted_address()
-                    .expect("original file address should be correct")
+                    .ok_or(AddressError::InvalidCsvFormat)?
             );
         }
+
+        Ok(())
     }
 }
 
