@@ -17,6 +17,12 @@ pub enum GeocodingError {
 
     #[error("Google Maps API error: {0}")]
     GoogleMapsError(#[from] google_maps::GoogleMapsError),
+
+    #[error("Address not found in the original file")]
+    FileAddressNotFound,
+
+    #[error("No result from Google Maps API")]
+    NoApiResult,
 }
 
 impl MyGeocoding {
@@ -45,7 +51,7 @@ impl MyGeocoding {
     ) -> Result<(), GeocodingError> {
         let address_to_search = address_obj
             .get_address_with_site_name()
-            .expect("address should be found");
+            .ok_or(GeocodingError::FileAddressNotFound)?;
 
         let search_result = self
             .map_client
@@ -59,7 +65,7 @@ impl MyGeocoding {
             search_result
                 .results
                 .first()
-                .expect("should get at least one result from API"),
+                .ok_or(GeocodingError::NoApiResult)?,
             address_obj.get_site_name(),
         );
         self.address_results.push(parsed_address);
