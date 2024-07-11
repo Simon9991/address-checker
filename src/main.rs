@@ -51,16 +51,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let address_results = geocoding.lock().await.address_results.clone();
     Addresses::addresses_to_csv(address_results, &file_path_buf)?;
 
-    // let address_results = results.into_iter().filter_map(Result::ok);
-
-    // Sending requests to the Google Maps API
-    // for addr in &old_addresses.addresses {
-    //     geocoding.get_address_from_google(addr).await?;
-    // }
-
-    // Serializing back into a `.csv`
-    // Addresses::addresses_to_csv(geocoding.address_results, &file_path_buf)?;
-
     let duration = start.elapsed();
     println!("Time taken: {:?}", duration);
 
