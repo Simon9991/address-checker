@@ -1,8 +1,13 @@
 use csv::ReaderBuilder;
-use google_maps::{geocoding::Geocoding, PlaceType};
+use google_maps::{
+    geocoding::Geocoding,
+    prelude::{dec, Decimal},
+    PlaceType,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File},
+    intrinsics::sinf64,
     io::BufReader,
     path::Path,
 };
@@ -204,6 +209,13 @@ impl Address {
         self.site_name.clone()
     }
 
+    fn deg_to_rad(deg: Decimal) -> f64 {
+        let deg_as_float = deg as f64;
+        let res = (std::f64::consts::PI / 180.0) * deg_as_float;
+
+        res
+    }
+
     pub fn parse_geocoding_result(result: &Geocoding, address_obj: Address) -> Address {
         // struct parts bc crate author committed a crime (vec as enum)
         let mut street_number = None;
@@ -239,8 +251,9 @@ impl Address {
             _ => None,
         };
 
-        let new_lat = result.geometry.location.lat;
-        let new_lng = result.geometry.location.lng;
+        let earth_radius = 6371; // in km
+        let d_lat = Self::deg_to_rad(result.geometry.location.lat - address_obj.old_lat);
+        let d_lng = Self::deg_to_rad(result.geometry.location.lng - address_obj.old_lng);
 
         // let distance = todo!();
 
