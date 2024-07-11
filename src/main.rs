@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let old_addresses = Addresses::new(&file_path_buf)?;
 
     // Creating a semaphore to limit concurrent requests
-    let semaphore = Arc::new(Semaphore::new(10)); // Possible to adjust
+    let semaphore = Arc::new(Semaphore::new(50)); // Possible to adjust
                                                   // the number based on the API rate limits
 
     let results = stream::iter(old_addresses.addresses.iter())
@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 gc.get_address_from_google(addr).await
             }
         })
-        .buffer_unordered(10)
+        .buffer_unordered(50)
         .collect::<Vec<_>>()
         .await;
 
