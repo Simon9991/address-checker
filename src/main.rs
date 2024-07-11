@@ -34,8 +34,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             async move {
                 let _permit = sp.acquire().await.unwrap();
-                let mut gc = gc.lock().await;
-                gc.get_address_from_google(addr).await
+                gc.get_address_from_google(addr.clone()).await
             }
         })
         .buffer_unordered(30)

@@ -46,9 +46,9 @@ impl MyGeocoding {
     /// ## Arguments
     /// `address_obj` --> an `Address` object containing the needed information
     pub async fn get_address_from_google(
-        &mut self,
-        address_obj: &Address,
-    ) -> Result<(), GeocodingError> {
+        &self,
+        address_obj: Address,
+    ) -> Result<Address, GeocodingError> {
         let address_to_search = address_obj
             .get_address_with_site_name()
             .ok_or(GeocodingError::FileAddressNotFound)?;
@@ -66,10 +66,9 @@ impl MyGeocoding {
                 .results
                 .first()
                 .ok_or(GeocodingError::NoApiResult)?,
-            address_obj.get_site_name(),
+            address_obj,
         );
-        self.address_results.push(parsed_address);
 
-        Ok(())
+        Ok(parsed_address)
     }
 }

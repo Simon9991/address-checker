@@ -10,22 +10,56 @@ use thiserror::Error;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
-    name: Option<String>,
+    #[serde(rename(deserialize = "name", serialize = "site_name"))]
+    site_name: Option<String>,
+    group_name: Option<String>,
 
-    #[serde(rename = "address")]
-    full_address: Option<String>,
+    #[serde(rename(deserialize = "address", serialize = "old_address"))]
+    old_full_address: Option<String>,
+    #[serde(rename(serialize = "new_address"), skip_deserializing)]
+    new_full_address: Option<String>,
 
-    #[serde(rename = "city")]
-    locality: Option<String>,
+    #[serde(rename(deserialize = "city", serialize = "old_city"))]
+    old_locality: Option<String>,
+    #[serde(rename(serialize = "new_city"), skip_deserializing)]
+    new_locality: Option<String>,
 
-    #[serde(rename = "zip")]
-    postal_code: Option<String>,
+    #[serde(rename(deserialize = "zip", serialize = "old_zip"))]
+    old_postal_code: Option<String>,
+    #[serde(rename(serialize = "new_zip"), skip_deserializing)]
+    new_postal_code: Option<String>,
 
-    administrative_area_level1: Option<String>,
-    administrative_area_level2: Option<String>,
+    #[serde(rename(
+        deserialize = "administrative_area_level1",
+        serialize = "old_administrative_area_level1"
+    ))]
+    old_administrative_area_level1: Option<String>,
+    #[serde(
+        rename(serialize = "new_administrative_area_level1"),
+        skip_deserializing
+    )]
+    new_administrative_area_level1: Option<String>,
 
-    lat: google_maps::prelude::Decimal,
-    lng: google_maps::prelude::Decimal,
+    #[serde(rename(
+        deserialize = "administrative_area_level2",
+        serialize = "old_administrative_area_level2"
+    ))]
+    old_administrative_area_level2: Option<String>,
+    #[serde(
+        rename(serialize = "new_administrative_area_level2"),
+        skip_deserializing
+    )]
+    new_administrative_area_level2: Option<String>,
+
+    #[serde(rename(deserialize = "lat", serialize = "old_lat"), skip_serializing)]
+    old_lat: google_maps::prelude::Decimal,
+    #[serde(rename(deserialize = "lng", serialize = "old_lng"), skip_serializing)]
+    old_lng: google_maps::prelude::Decimal,
+
+    #[serde(rename(serialize = "new_lat"), skip_deserializing)]
+    new_lat: google_maps::prelude::Decimal,
+    #[serde(rename(serialize = "new_lng"), skip_deserializing)]
+    new_lng: google_maps::prelude::Decimal,
 
     // Fields for geocoding results
     #[serde(skip_deserializing, skip_serializing)]
@@ -34,6 +68,8 @@ pub struct Address {
     route: Option<String>,
     #[serde(skip_deserializing, skip_serializing)]
     country: Option<String>,
+    #[serde(skip_deserializing)]
+    meter_distance: f64,
 }
 
 #[derive(Error, Debug)]
@@ -143,32 +179,32 @@ impl Address {
     pub fn get_formatted_address(&self) -> Option<String> {
         Some(format!(
             "{}, {}, {}, {}, {}, {}, {}, {}",
-            self.name.as_ref()?,
-            self.full_address.as_ref()?,
-            self.locality.as_ref()?,
-            self.postal_code.as_ref()?,
-            self.administrative_area_level1.as_ref()?,
-            self.administrative_area_level2.as_ref()?,
-            self.lat,
-            self.lng,
+            self.site_name.as_ref()?,
+            self.old_full_address.as_ref()?,
+            self.old_locality.as_ref()?,
+            self.old_postal_code.as_ref()?,
+            self.old_administrative_area_level1.as_ref()?,
+            self.old_administrative_area_level2.as_ref()?,
+            self.old_lat,
+            self.old_lng,
         ))
     }
 
     pub fn get_address_with_site_name(&self) -> Option<String> {
         Some(format!(
             "{}, {}, {}, {}",
-            self.name.as_ref()?,
-            self.full_address.as_ref()?,
-            self.locality.as_ref()?,
-            self.postal_code.as_ref()?
+            self.site_name.as_ref()?,
+            self.old_full_address.as_ref()?,
+            self.old_locality.as_ref()?,
+            self.old_postal_code.as_ref()?
         ))
     }
 
     pub fn get_site_name(&self) -> Option<String> {
-        self.name.clone()
+        self.site_name.clone()
     }
 
-    pub fn parse_geocoding_result(result: &Geocoding, site_name: Option<String>) -> Address {
+    pub fn parse_geocoding_result(result: &Geocoding, address_obj: Address) -> Address {
         // struct parts bc crate author committed a crime (vec as enum)
         let mut street_number = None;
         let mut route = None;
@@ -203,18 +239,24 @@ impl Address {
             _ => None,
         };
 
+        let new_lat = result.geometry.location.lat;
+        let new_lng = result.geometry.location.lng;
+
+        // let distance = todo!();
+
         Address {
-            name: site_name,
             street_number,
-            full_address,
+            new_full_address: full_address,
             route,
-            locality,
-            administrative_area_level2,
-            administrative_area_level1,
+            new_locality: locality,
+            new_administrative_area_level2: administrative_area_level2,
+            new_administrative_area_level1: administrative_area_level1,
             country,
-            postal_code,
-            lat: result.geometry.location.lat,
-            lng: result.geometry.location.lng,
+            new_postal_code: postal_code,
+            new_lat: result.geometry.location.lat,
+            new_lng: result.geometry.location.lng,
+            meter_distance: 0.into(),
+            ..address_obj
         }
     }
 }
