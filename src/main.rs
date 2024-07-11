@@ -20,9 +20,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let file_path_buf = PathBuf::from_str(args.file_path.as_str())?;
 
     // Initializing the needed mod
-    let geocoding = Arc::new(Mutex::new(
-        MyGeocoding::new().expect("API key should be an env variable"),
-    ));
+    let geocoding = Arc::new(Mutex::new(MyGeocoding::new()?));
     let old_addresses = Addresses::new(&file_path_buf)?;
 
     // Creating a semaphore to limit concurrent requests
