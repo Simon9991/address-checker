@@ -54,8 +54,5 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let duration = start.elapsed();
     println!("Time taken: {:?}", duration);
 
-    let duration = start.elapsed();
-    println!("Time taken: {:?}", duration);
-
     Ok(())
 }
