@@ -44,8 +44,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .collect::<Vec<_>>()
         .await;
 
-    for res in results {
-        res?;
+    if !args.skip_error_check {
+        for res in results {
+            res?;
+        }
     }
 
     let address_results = geocoding.lock().await.address_results.clone();
