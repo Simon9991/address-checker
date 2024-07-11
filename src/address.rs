@@ -4,14 +4,16 @@ use google_maps::{
     prelude::{dec, Decimal},
     PlaceType,
 };
+use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File},
-    intrinsics::sinf64,
     io::BufReader,
     path::Path,
 };
 use thiserror::Error;
+
+use crate::geocoding::GeocodingError;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
@@ -99,6 +101,9 @@ pub enum AddressError {
 
     #[error("Failed to convert the original file name into a valid string")]
     FileNameConversionFailed,
+
+    #[error("Failed to convert Decimal to f64")]
+    DecimalToFloatError,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
@@ -209,11 +214,8 @@ impl Address {
         self.site_name.clone()
     }
 
-    fn deg_to_rad(deg: Decimal) -> f64 {
-        let deg_as_float = deg as f64;
-        let res = (std::f64::consts::PI / 180.0) * deg_as_float;
-
-        res
+    fn deg_to_rad(deg: f64) -> f64 {
+        (std::f64::consts::PI / 180.0) * deg
     }
 
     pub fn parse_geocoding_result(result: &Geocoding, address_obj: Address) -> Address {
@@ -252,8 +254,14 @@ impl Address {
         };
 
         let earth_radius = 6371; // in km
-        let d_lat = Self::deg_to_rad(result.geometry.location.lat - address_obj.old_lat);
-        let d_lng = Self::deg_to_rad(result.geometry.location.lng - address_obj.old_lng);
+        let d_lat = Self::deg_to_rad(
+            result.geometry.location.lat.to_f64().unwrap_or(0.0)
+                - address_obj.old_lat.to_f64().unwrap_or(0.0),
+        );
+        let d_lng = Self::deg_to_rad(
+            result.geometry.location.lng.to_f64().unwrap_or(0.0)
+                - address_obj.old_lng.to_f64().unwrap_or(0.0),
+        );
 
         // let distance = todo!();
 
