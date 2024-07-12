@@ -44,7 +44,7 @@ impl MyGeocoding {
         address_obj: Address,
     ) -> Result<Address, GeocodingError> {
         let address_to_search = address_obj
-            .get_address_with_site_name()
+            .get_address_with_group_name()
             .ok_or(GeocodingError::FileAddressNotFound)?;
 
         let search_result = self
