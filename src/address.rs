@@ -1,5 +1,5 @@
 use csv::ReaderBuilder;
-use google_maps::{geocoding::Geocoding, PlaceType, prelude::Decimal};
+use google_maps::{geocoding::Geocoding, prelude::Decimal, PlaceType};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -96,9 +96,6 @@ pub enum AddressError {
 
     #[error("Failed to convert the original file name into a valid string")]
     FileNameConversionFailed,
-
-    #[error("Failed to convert Decimal to f64")]
-    DecimalToFloatError,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
@@ -241,7 +238,7 @@ impl Address {
             (None, Some(street)) => Some(street.clone()),
             _ => None,
         };
-        
+
         // Encapsulates the `unwraps` due to required Decimal trait conversion :D
         let make_geoutils_location = |lat: Decimal, lon: Decimal| {
             geoutils::Location::new(lat.to_f64().unwrap(), lon.to_f64().unwrap())
