@@ -1,31 +1,34 @@
-use std::{error::Error, path::PathBuf, str::FromStr, sync::Arc, time::Instant};
+use std::{path::PathBuf, sync::Arc, time::Instant};
 
-use address::Addresses;
+use address::{Address, Addresses};
 use args::Arguments;
 use futures::stream::{self, StreamExt};
-use geocoding::MyGeocoding;
-use tokio::sync::{Mutex, Semaphore};
+use geocoding::{GeocodingError, MyGeocoding};
+use tokio::sync::Semaphore;
 
 mod address;
 mod args;
 mod geocoding;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> anyhow::Result<()> {
     // Timing performance
     let start = Instant::now();
 
     // CLI Arguments
     let args = Arguments::new();
-    let file_path_buf = PathBuf::from_str(args.file_path.as_str())?;
+    let mut file_path_buf = PathBuf::new();
+    file_path_buf.push(args.file_path.as_str());
 
     // Initializing the needed mod
-    let geocoding = Arc::new(Mutex::new(MyGeocoding::new()?));
+    let geocoding = Arc::new(MyGeocoding::new()?);
     let old_addresses = Addresses::new(&file_path_buf)?;
 
+    // Possible to adjust the number based on the API rate limits
+    const MAX_CONCURRENT_REQUESTS: usize = 10;
+
     // Creating a semaphore to limit concurrent requests
-    let semaphore = Arc::new(Semaphore::new(10)); // Possible to adjust
-                                                  // the number based on the API rate limits
+    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
 
     let results = stream::iter(old_addresses.addresses.iter())
         .map(|addr| {
@@ -39,16 +42,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
         })
         .buffer_unordered(30)
         .collect::<Vec<_>>()
-        .await;
+        .await
+        .into_iter()
+        .collect::<Vec<Result<Address, GeocodingError>>>();
 
-    if !args.skip_error_check {
+    dbg!(&results);
+
+    // The ones that weren't errors
+    let mut found_addresses = vec![];
+
+    if args.skip_error_check {
+        found_addresses = results.into_iter().filter(|r| r.is_ok()).map(|r| r.expect("all ok values aren't errors")).collect();
+    } else {
+        // we want to return the first error we see!
         for res in results {
-            res?;
+            found_addresses.push(res?);
         }
     }
 
-    let address_results = geocoding.lock().await.address_results.clone();
-    Addresses::addresses_to_csv(address_results, &file_path_buf)?;
+    Addresses::addresses_to_csv(found_addresses, &file_path_buf)?;
 
     let duration = start.elapsed();
     println!("Time taken: {:?}", duration);
