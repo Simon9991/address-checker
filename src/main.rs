@@ -52,11 +52,7 @@ async fn main() -> anyhow::Result<()> {
     let mut found_addresses = vec![];
 
     if args.skip_error_check {
-        found_addresses = results
-            .into_iter()
-            .filter(|r| r.is_ok())
-            .map(|r| r.expect("all ok values aren't errors"))
-            .collect();
+        found_addresses = results.into_iter().filter_map(|r| r.ok()).collect();
     } else {
         // we want to return the first error we see!
         for res in results {
