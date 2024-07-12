@@ -4,10 +4,9 @@ use thiserror::Error;
 
 use crate::address::Address;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
-    pub address_results: Vec<Address>,
 }
 
 #[derive(Error, Debug)]
@@ -34,12 +33,7 @@ impl MyGeocoding {
         let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
         let map_client = GoogleMapsClient::try_new(api_key)?.build();
 
-        let address_results = vec![];
-
-        Ok(MyGeocoding {
-            map_client,
-            address_results,
-        })
+        Ok(MyGeocoding { map_client })
     }
 
     /// Searches for the passed `address_obj` argument.
