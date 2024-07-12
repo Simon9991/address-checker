@@ -3,6 +3,7 @@ use google_maps::{geocoding::Geocoding, prelude::Decimal, PlaceType};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
+    fmt::{Display, Write},
     fs::{self, File},
     io::BufReader,
     path::Path,
@@ -103,7 +104,6 @@ pub struct Addresses {
     pub addresses: Vec<Address>,
 }
 
-#[allow(dead_code)]
 impl Addresses {
     pub fn new(path_to_file: &Path) -> Result<Self, AddressError> {
         let file = File::open(path_to_file).map_err(|e| {
@@ -161,41 +161,36 @@ impl Addresses {
 
         Ok(())
     }
+}
 
-    pub fn display(&self) -> Result<(), AddressError> {
-        for (index, address) in self.addresses.iter().enumerate() {
-            println!(
-                "Address {}: {}",
-                index + 1,
-                address
-                    .get_formatted_address()
-                    .ok_or(AddressError::InvalidCsvFormat)?
-            );
+impl Display for Address {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let fields = [
+            &self.site_name,
+            &self.old_full_address,
+            &self.old_locality,
+            &self.old_postal_code,
+            &self.old_administrative_area_level1,
+            &self.old_administrative_area_level2,
+        ];
+
+        for field in fields {
+            if let Some(t) = field {
+                f.write_str(format!("{} ", t.to_string().as_str()).as_str())?;
+            }
         }
+
+        f.write_str(format!("{} {}", self.old_lat, self.old_lng).as_str())?;
 
         Ok(())
     }
 }
 
 impl Address {
-    pub fn get_formatted_address(&self) -> Option<String> {
-        Some(format!(
-            "{}, {}, {}, {}, {}, {}, {}, {}",
-            self.site_name.as_ref()?,
-            self.old_full_address.as_ref()?,
-            self.old_locality.as_ref()?,
-            self.old_postal_code.as_ref()?,
-            self.old_administrative_area_level1.as_ref()?,
-            self.old_administrative_area_level2.as_ref()?,
-            self.old_lat,
-            self.old_lng,
-        ))
-    }
-
-    pub fn get_address_with_site_name(&self) -> Option<String> {
+    pub fn get_address_with_group_name(&self) -> Option<String> {
         Some(format!(
             "{}, {}, {}, {}",
-            self.site_name.as_ref()?,
+            self.group_name.as_ref()?,
             self.old_full_address.as_ref()?,
             self.old_locality.as_ref()?,
             self.old_postal_code.as_ref()?
