@@ -3,7 +3,7 @@ use google_maps::{geocoding::Geocoding, prelude::Decimal, PlaceType};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Display, Write},
+    fmt::Display,
     fs::{self, File},
     io::BufReader,
     path::Path,
@@ -174,10 +174,8 @@ impl Display for Address {
             &self.old_administrative_area_level2,
         ];
 
-        for field in fields {
-            if let Some(t) = field {
-                f.write_str(format!("{} ", t.to_string().as_str()).as_str())?;
-            }
+        for field in fields.into_iter().flatten() {
+            f.write_str(format!("{} ", field).as_str())?;
         }
 
         f.write_str(format!("{} {}", self.old_lat, self.old_lng).as_str())?;
