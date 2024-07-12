@@ -30,14 +30,14 @@ async fn main() -> anyhow::Result<()> {
     // Creating a semaphore to limit concurrent requests
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
 
-    let results = stream::iter(old_addresses.addresses.iter())
+    let results = stream::iter(old_addresses.addresses.into_iter())
         .map(|addr| {
             let gc = Arc::clone(&geocoding);
             let sp = Arc::clone(&semaphore);
 
             async move {
                 let _permit = sp.acquire().await.unwrap();
-                gc.get_address_from_google(addr.clone()).await
+                gc.get_address_from_google(addr).await
             }
         })
         .buffer_unordered(30)
