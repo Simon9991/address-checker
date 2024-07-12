@@ -41,10 +41,8 @@ async fn main() -> anyhow::Result<()> {
             }
         })
         .buffer_unordered(30)
-        .collect::<Vec<_>>()
-        .await
-        .into_iter()
-        .collect::<Vec<Result<Address, GeocodingError>>>();
+        .collect::<Vec<Result<Address, GeocodingError>>>()
+        .await;
 
     dbg!(&results);
 
