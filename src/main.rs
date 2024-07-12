@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
     file_path_buf.push(args.file_path.as_str());
 
     // Initializing the needed mod
-    let geocoding = Arc::new(MyGeocoding::new()?);
+    let geocoding = Arc::new(MyGeocoding::new(args.skip_error_check)?);
     let old_addresses = Addresses::new(&file_path_buf)?;
 
     // Possible to adjust the number based on the API rate limits
@@ -45,8 +45,6 @@ async fn main() -> anyhow::Result<()> {
         .await
         .into_iter()
         .collect::<Vec<Result<Address, GeocodingError>>>();
-
-    dbg!(&results);
 
     // The ones that weren't errors
     let mut found_addresses = vec![];

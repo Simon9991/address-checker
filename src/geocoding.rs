@@ -7,6 +7,7 @@ use crate::address::Address;
 #[derive(Clone, Debug)]
 pub struct MyGeocoding {
     map_client: GoogleMapsClient,
+    skip_errors: bool,
 }
 
 #[derive(Error, Debug)]
@@ -29,11 +30,14 @@ impl MyGeocoding {
     /// ## Arguments
     /// This function automatically searches for an `env` variable called `GOOGLE_MAPS_API_KEY`. It
     /// returns a custom `GeocodingError` if it is not found.
-    pub fn new() -> Result<Self, GeocodingError> {
+    pub fn new(skip_errors: bool) -> Result<Self, GeocodingError> {
         let api_key = env::var("GOOGLE_MAPS_API_KEY")?;
         let map_client = GoogleMapsClient::try_new(api_key)?.build();
 
-        Ok(MyGeocoding { map_client })
+        Ok(MyGeocoding {
+            map_client,
+            skip_errors,
+        })
     }
 
     /// Searches for the passed `address_obj` argument.
@@ -43,9 +47,16 @@ impl MyGeocoding {
         &self,
         address_obj: Address,
     ) -> Result<Address, GeocodingError> {
-        let address_to_search = address_obj
-            .get_address_with_group_name()
-            .ok_or(GeocodingError::FileAddressNotFound)?;
+        let address_to_search = match address_obj.get_address_with_group_name() {
+            Some(address) => address,
+            None => {
+                if self.skip_errors {
+                    return Ok(address_obj);
+                } else {
+                    return Err(GeocodingError::FileAddressNotFound);
+                }
+            }
+        };
 
         let search_result = self
             .map_client
@@ -54,6 +65,8 @@ impl MyGeocoding {
             .with_address(address_to_search)
             .execute()
             .await?;
+
+        println!("Found!");
 
         let parsed_address = Address::parse_geocoding_result(
             search_result

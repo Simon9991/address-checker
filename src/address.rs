@@ -13,7 +13,7 @@ use thiserror::Error;
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
     #[serde(rename = "site")]
-    site_name: Option<String>,
+    pub site_name: Option<String>,
     #[serde(rename = "group")]
     group_name: Option<String>,
 
