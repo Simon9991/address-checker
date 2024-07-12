@@ -1,9 +1,5 @@
 use csv::ReaderBuilder;
-use google_maps::{
-    geocoding::Geocoding,
-    prelude::{dec, Decimal},
-    PlaceType,
-};
+use google_maps::{geocoding::Geocoding, PlaceType, prelude::Decimal};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -13,12 +9,11 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::geocoding::GeocodingError;
-
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
     #[serde(rename(deserialize = "name", serialize = "site_name"))]
     site_name: Option<String>,
+    #[serde(rename(deserialize = "group", serialize = "group_name"))]
     group_name: Option<String>,
 
     #[serde(rename(deserialize = "address", serialize = "old_address"))]
@@ -210,14 +205,6 @@ impl Address {
         ))
     }
 
-    pub fn get_site_name(&self) -> Option<String> {
-        self.site_name.clone()
-    }
-
-    fn deg_to_rad(deg: f64) -> f64 {
-        (std::f64::consts::PI / 180.0) * deg
-    }
-
     pub fn parse_geocoding_result(result: &Geocoding, address_obj: Address) -> Address {
         // struct parts bc crate author committed a crime (vec as enum)
         let mut street_number = None;
@@ -227,6 +214,8 @@ impl Address {
         let mut administrative_area_level1 = None;
         let mut country = None;
         let mut postal_code = None;
+        let new_lat = result.geometry.location.lat;
+        let new_lng = result.geometry.location.lng;
 
         for component in &result.address_components {
             for type_ in &component.types {
@@ -252,18 +241,15 @@ impl Address {
             (None, Some(street)) => Some(street.clone()),
             _ => None,
         };
+        
+        // Encapsulates the `unwraps` due to required Decimal trait conversion :D
+        let make_geoutils_location = |lat: Decimal, lon: Decimal| {
+            geoutils::Location::new(lat.to_f64().unwrap(), lon.to_f64().unwrap())
+        };
 
-        let earth_radius = 6371; // in km
-        let d_lat = Self::deg_to_rad(
-            result.geometry.location.lat.to_f64().unwrap_or(0.0)
-                - address_obj.old_lat.to_f64().unwrap_or(0.0),
-        );
-        let d_lng = Self::deg_to_rad(
-            result.geometry.location.lng.to_f64().unwrap_or(0.0)
-                - address_obj.old_lng.to_f64().unwrap_or(0.0),
-        );
-
-        // let distance = todo!();
+        let original_location = make_geoutils_location(address_obj.old_lat, address_obj.old_lng);
+        let new_location = make_geoutils_location(new_lat, new_lng);
+        let distance = original_location.distance_to(&new_location).unwrap();
 
         Address {
             street_number,
@@ -274,9 +260,9 @@ impl Address {
             new_administrative_area_level1: administrative_area_level1,
             country,
             new_postal_code: postal_code,
-            new_lat: result.geometry.location.lat,
-            new_lng: result.geometry.location.lng,
-            meter_distance: 0.into(),
+            new_lat,
+            new_lng,
+            meter_distance: distance.meters(),
             ..address_obj
         }
     }
