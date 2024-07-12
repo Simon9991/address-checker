@@ -20,7 +20,7 @@ Here are the expected header:
 - `skip-error-check` - will skip if the GMaps API encountered an error fetching the addresses.
 
 ```csv
-name,address,city,zip,country,administrative_area_level1,administrative_area_level2,lat,lng
+site,group,address,city,zip,country,administrative_area_level1,administrative_area_level2,lat,lng
 ```
 
 ## Disclaimer

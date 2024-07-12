@@ -3,7 +3,7 @@ use google_maps::{geocoding::Geocoding, prelude::Decimal, PlaceType};
 use num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
 use std::{
-    fmt::{Display, Write},
+    fmt::Display,
     fs::{self, File},
     io::BufReader,
     path::Path,
@@ -12,9 +12,9 @@ use thiserror::Error;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Deserialize, Serialize)]
 pub struct Address {
-    #[serde(rename(deserialize = "name", serialize = "site_name"))]
+    #[serde(rename = "site")]
     site_name: Option<String>,
-    #[serde(rename(deserialize = "group", serialize = "group_name"))]
+    #[serde(rename = "group")]
     group_name: Option<String>,
 
     #[serde(rename(deserialize = "address", serialize = "old_address"))]
