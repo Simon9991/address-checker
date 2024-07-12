@@ -30,33 +30,31 @@ async fn main() -> anyhow::Result<()> {
     // Creating a semaphore to limit concurrent requests
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
 
-    let results = stream::iter(old_addresses.addresses.iter())
+    let results = stream::iter(old_addresses.addresses.into_iter())
         .map(|addr| {
             let gc = Arc::clone(&geocoding);
             let sp = Arc::clone(&semaphore);
 
             async move {
                 let _permit = sp.acquire().await.unwrap();
-                gc.get_address_from_google(addr.clone()).await
+                gc.get_address_from_google(addr).await
             }
         })
         .buffer_unordered(30)
-        .collect::<Vec<_>>()
-        .await
-        .into_iter()
-        .collect::<Vec<Result<Address, GeocodingError>>>();
+        .collect::<Vec<Result<Address, GeocodingError>>>()
+        .await;
 
     // The ones that weren't errors
-    let mut found_addresses = vec![];
-
-    if args.skip_error_check {
-        found_addresses = results.into_iter().filter_map(|r| r.ok()).collect();
+    let found_addresses = if args.skip_error_check {
+        results.into_iter().filter_map(|r| r.ok()).collect()
     } else {
         // we want to return the first error we see!
+        let mut v = Vec::new();
         for res in results {
-            found_addresses.push(res?);
+            v.push(res?);
         }
-    }
+        v
+    };
 
     Addresses::addresses_to_csv(found_addresses, &file_path_buf)?;
 
