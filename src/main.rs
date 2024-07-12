@@ -47,16 +47,16 @@ async fn main() -> anyhow::Result<()> {
     dbg!(&results);
 
     // The ones that weren't errors
-    let mut found_addresses = vec![];
-
-    if args.skip_error_check {
-        found_addresses = results.into_iter().filter_map(|r| r.ok()).collect();
+    let found_addresses = if args.skip_error_check {
+        results.into_iter().filter_map(|r| r.ok()).collect()
     } else {
         // we want to return the first error we see!
+        let mut v = Vec::new();
         for res in results {
-            found_addresses.push(res?);
+            v.push(res?);
         }
-    }
+        v
+    };
 
     Addresses::addresses_to_csv(found_addresses, &file_path_buf)?;
 
